@@ -1,5 +1,6 @@
 package com.itau.aplicacao.service;
 
+import com.itau.aplicacao.config.JanelaEstatisticasConfig;
 import com.itau.aplicacao.dto.EstatisticasResponse;
 import com.itau.aplicacao.dto.TransacaoRequest;
 import com.itau.aplicacao.model.Transacao;
@@ -18,9 +19,8 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class TransacaoService {
 
-    private static final int JANELA_SEGUNDOS = 60;
-
     private final TransacaoStore transacaoStore;
+    private final JanelaEstatisticasConfig janelaEstatisticasConfig;
 
     public void registrar(TransacaoRequest request) {
         Transacao transacao = new Transacao(request.getValor(), request.getDataHora());
@@ -32,7 +32,8 @@ public class TransacaoService {
     }
 
     public EstatisticasResponse calcularEstatisticas() {
-        Instant cutoff = Instant.now().minus(JANELA_SEGUNDOS, ChronoUnit.SECONDS);
+        int janelaSegundos = janelaEstatisticasConfig.getJanelaSegundos();
+        Instant cutoff = Instant.now().minus(janelaSegundos, ChronoUnit.SECONDS);
 
         DoubleSummaryStatistics stats = transacaoStore.obterTodas().stream()
                 .filter(t -> t.getDataHora().toInstant().isAfter(cutoff) || t.getDataHora().toInstant().equals(cutoff))

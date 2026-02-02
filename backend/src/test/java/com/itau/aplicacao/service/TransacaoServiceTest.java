@@ -1,5 +1,6 @@
 package com.itau.aplicacao.service;
 
+import com.itau.aplicacao.config.JanelaEstatisticasConfig;
 import com.itau.aplicacao.dto.EstatisticasResponse;
 import com.itau.aplicacao.dto.TransacaoRequest;
 import com.itau.aplicacao.model.Transacao;
@@ -29,6 +30,9 @@ class TransacaoServiceTest {
 
     @Mock
     private TransacaoStore transacaoStore;
+
+    @Mock
+    private JanelaEstatisticasConfig janelaEstatisticasConfig;
 
     @InjectMocks
     private TransacaoService transacaoService;
@@ -72,6 +76,7 @@ class TransacaoServiceTest {
 
         @Test
         void deveRetornarZerosQuandoNaoHaTransacoes() {
+            when(janelaEstatisticasConfig.getJanelaSegundos()).thenReturn(60);
             when(transacaoStore.obterTodas()).thenReturn(List.of());
 
             EstatisticasResponse result = transacaoService.calcularEstatisticas();
@@ -85,6 +90,7 @@ class TransacaoServiceTest {
 
         @Test
         void deveCalcularEstatisticasComTransacoesNaJanela() {
+            when(janelaEstatisticasConfig.getJanelaSegundos()).thenReturn(60);
             Instant agora = Instant.now();
             OffsetDateTime dt1 = OffsetDateTime.ofInstant(agora, ZoneOffset.UTC);
             OffsetDateTime dt2 = OffsetDateTime.ofInstant(agora.minusSeconds(30), ZoneOffset.UTC);
@@ -104,6 +110,7 @@ class TransacaoServiceTest {
 
         @Test
         void deveIgnorarTransacoesForaDaJanelaDe60Segundos() {
+            when(janelaEstatisticasConfig.getJanelaSegundos()).thenReturn(60);
             Instant agora = Instant.now();
             OffsetDateTime dentro = OffsetDateTime.ofInstant(agora, ZoneOffset.UTC);
             OffsetDateTime fora = OffsetDateTime.ofInstant(agora.minusSeconds(61), ZoneOffset.UTC);
@@ -122,6 +129,7 @@ class TransacaoServiceTest {
 
         @Test
         void deveIncluirTransacaoDentroDaJanelaDe60Segundos() {
+            when(janelaEstatisticasConfig.getJanelaSegundos()).thenReturn(60);
             Instant agora = Instant.now();
             OffsetDateTime dentro = OffsetDateTime.ofInstant(agora.minusSeconds(59), ZoneOffset.UTC);
             when(transacaoStore.obterTodas()).thenReturn(List.of(
@@ -136,6 +144,7 @@ class TransacaoServiceTest {
 
         @Test
         void deveCalcularMediaComSeisCasasDecimais() {
+            when(janelaEstatisticasConfig.getJanelaSegundos()).thenReturn(60);
             Instant agora = Instant.now();
             when(transacaoStore.obterTodas()).thenReturn(List.of(
                     new Transacao(BigDecimal.valueOf(10), OffsetDateTime.ofInstant(agora, ZoneOffset.UTC)),
@@ -146,6 +155,21 @@ class TransacaoServiceTest {
 
             assertThat(result.getAvg()).isEqualByComparingTo(BigDecimal.valueOf(10.5));
             assertThat(result.getAvg().scale()).isLessThanOrEqualTo(6);
+        }
+
+        @Test
+        void deveUsarJanelaConfiguradaQuandoDiferenteDe60() {
+            when(janelaEstatisticasConfig.getJanelaSegundos()).thenReturn(120);
+            Instant agora = Instant.now();
+            OffsetDateTime dentro = OffsetDateTime.ofInstant(agora.minusSeconds(90), ZoneOffset.UTC);
+            when(transacaoStore.obterTodas()).thenReturn(List.of(
+                    new Transacao(BigDecimal.valueOf(50), dentro)
+            ));
+
+            EstatisticasResponse result = transacaoService.calcularEstatisticas();
+
+            assertThat(result.getCount()).isEqualTo(1);
+            assertThat(result.getSum()).isEqualByComparingTo(BigDecimal.valueOf(50));
         }
     }
 }
