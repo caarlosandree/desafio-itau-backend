@@ -14,10 +14,14 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.tags.Tag;
 
 @RestController
 @RequestMapping("/api/v1/transacoes")
 @RequiredArgsConstructor
+@Tag(name = "Transações", description = "Registro e limpeza de transações")
 public class TransacaoController {
 
     private static final Logger log = LoggerFactory.getLogger(TransacaoController.class);
@@ -25,6 +29,10 @@ public class TransacaoController {
     private final TransacaoService transacaoService;
 
     @PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE)
+    @Operation(summary = "Registrar transação", description = "Registra uma transação (valor e dataHora). Considerada na janela dos últimos 60 segundos para estatísticas.")
+    @ApiResponse(responseCode = "201", description = "Transação registrada")
+    @ApiResponse(responseCode = "422", description = "Validação falhou (valor ou dataHora inválidos)")
+    @ApiResponse(responseCode = "400", description = "Corpo da requisição inválido")
     public ResponseEntity<Void> registrar(@Valid @RequestBody TransacaoRequest request) {
         log.info("Transação recebida");
         transacaoService.registrar(request);
@@ -32,6 +40,8 @@ public class TransacaoController {
     }
 
     @DeleteMapping
+    @Operation(summary = "Limpar transações", description = "Remove todas as transações armazenadas em memória.")
+    @ApiResponse(responseCode = "200", description = "Transações removidas")
     public ResponseEntity<Void> limparTransacoes() {
         log.info("Limpeza de transações solicitada");
         transacaoService.limparTransacoes();
