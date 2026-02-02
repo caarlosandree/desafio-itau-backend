@@ -1,0 +1,10 @@
+{
+  "properties": [
+    {
+      "name": "app.estatisticas.janela-segundos",
+      "type": "java.lang.Integer",
+      "description": "Janela de tempo em segundos para cálculo das estatísticas (1 a 86400). Alterável em runtime via PATCH /api/v1/config/estatisticas/janela.",
+      "defaultValue": 60
+    }
+  ]
+}
