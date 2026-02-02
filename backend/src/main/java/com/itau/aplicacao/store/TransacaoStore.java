@@ -18,4 +18,8 @@ public class TransacaoStore {
     public List<Transacao> obterTodas() {
         return List.copyOf(transacoes);
     }
+
+    public void limparTodas() {
+        transacoes.clear();
+    }
 }

@@ -16,4 +16,8 @@ public class TransacaoService {
         Transacao transacao = new Transacao(request.getValor(), request.getDataHora());
         transacaoStore.adicionar(transacao);
     }
+
+    public void limparTransacoes() {
+        transacaoStore.limparTodas();
+    }
 }
